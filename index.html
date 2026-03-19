@@ -1,608 +1,69 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Happy Birthday Ate Marie!!</title>
-  <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
-
-  <style>
-    /* ── RESET & VARIABLES ── */
-    *, *::before, *::after { box-sizing: border-box; }
-
-    :root {
-      --gold:   #ffdd44;
-      --orange: #ffaa33;
-      --pink:   #ff4081;
-      --purple: #c678f0;
-    }
-
-    /* ── BASE ── */
-    body {
-      font-family: 'Quicksand', sans-serif;
-      background: radial-gradient(ellipse at center, #1b0034 0%, #0a0016 100%);
-      margin: 0;
-      padding: 0;
-      min-height: 100vh;
-      overflow-x: hidden;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      position: relative;
-      z-index: 1;
-    }
-
-    /* ── HEADINGS ── */
-    h1 {
-      font-family: 'Pacifico', cursive;
-      font-size: clamp(1.8em, 5vw, 3.2em);
-      text-align: center;
-      margin: 0.6em 0 0;
-      color: var(--gold);
-      letter-spacing: 2px;
-      text-shadow:
-        1px 1px 0 #000,
-        2px 2px 3px rgba(0,0,0,.5),
-        0 0 20px #ffcc00,
-        0 0 40px #ff8800;
-    }
-
-    h2 {
-      font-size: clamp(1em, 2.5vw, 1.5em);
-      text-align: center;
-      margin: 0.3em 0 1.2em;
-      color: var(--orange);
-      letter-spacing: 1px;
-      text-shadow: 1px 1px 0 #000, 0 0 8px #ff8800;
-    }
-
-    /* ── COUNTDOWN ── */
-    #countdown-banner {
-      background: linear-gradient(135deg, rgba(255,64,129,.15), rgba(198,120,240,.15));
-      border: 1px solid rgba(255,64,129,.4);
-      border-radius: 16px;
-      padding: 0.6em 2em;
-      margin-bottom: 1.2em;
-      text-align: center;
-      backdrop-filter: blur(6px);
-    }
-
-    #countdown-banner p {
-      margin: 0;
-      color: #f0d0ff;
-      font-size: .95em;
-      font-weight: 600;
-      letter-spacing: 1px;
-    }
-
-    .units {
-      display: flex;
-      gap: 1.2em;
-      justify-content: center;
-      margin-top: .4em;
-    }
-
-    .unit-box {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .unit-box span:first-child {
-      font-family: 'Pacifico', cursive;
-      font-size: 1.6em;
-      color: var(--gold);
-      text-shadow: 0 0 10px #ffcc00;
-      min-width: 2ch;
-      display: inline-block;
-      text-align: center;
-    }
-
-    .unit-label {
-      font-size: .65em;
-      color: #c0a0e0;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-    }
-
-    #bday-msg {
-      display: none;
-      font-family: 'Pacifico', cursive;
-      font-size: 1.4em;
-      color: var(--gold);
-      text-shadow: 0 0 15px #ffcc00;
-      padding: .4em 0;
-      animation: pulse 1.5s infinite;
-    }
-
-    /* ── MIC BLOW HINT ── */
-    #blow-hint {
-      display: flex;
-      align-items: center;
-      gap: .5em;
-      font-size: .9em;
-      color: #c0a0e0;
-      font-weight: 600;
-      letter-spacing: 1px;
-      margin-bottom: .6em;
-      opacity: 0;
-      transition: opacity .5s;
-    }
-    #blow-hint.visible { opacity: 1; }
-
-    #mic-bar-bg {
-      width: 110px;
-      height: 8px;
-      background: rgba(255,255,255,.1);
-      border-radius: 10px;
-      overflow: hidden;
-    }
-    #mic-bar {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, #ffdd44, #ff4081);
-      border-radius: 10px;
-      transition: width .06s;
-    }
-
-    /* ── START PROMPT ── */
-    #start-prompt {
-      font-size: .85em;
-      color: #9070b0;
-      letter-spacing: 1px;
-      margin-bottom: .4em;
-      animation: pulse 2s infinite;
-    }
-
-    /* ── CAKE ── */
-    .cake-container {
-      position: relative;
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 2em 0 4em;
-    }
-
-    .mmd_bday_cake {
-      position: relative;
-      width: 200px;
-      height: 40px;
-      background: #704b33;
-      border-radius: 100%;
-      box-shadow:
-        0px 4px  0px #633e26, 0px 8px  0px #633e26,
-        0px 12px 0px #633e26, 0px 16px 0px #633e26,
-        0px 20px 0px #633e26, 0px 24px 0px #633e26,
-        0px 28px 0px #633e26, 0px 32px 0px #c9243d,
-        0px 36px 0px #c9243d, 0px 40px 0px #f8ecc9,
-        0px 44px 0px #f8ecc9, 0px 48px 0px #f8ecc9,
-        0px 52px 0px #f8ecc9, 0px 56px 0px #633e26,
-        0px 60px 0px #633e26, 0px 64px 0px #633e26,
-        0px 68px 0px #633e26, 0px 72px 0px #633e26,
-        0px 76px 0px #633e26, 0px 80px 0px #633e26;
-    }
-
-    /* cake plate */
-    .mmd_bday_cake::before {
-      content: "";
-      position: absolute;
-      top: 79px;
-      left: -25px;
-      right: 0;
-      margin: auto;
-      width: 250px;
-      height: 50px;
-      border-radius: 100%;
-      background: #fff;
-      box-shadow: 0px 6px 0px rgba(0,0,0,.1);
-      z-index: -1;
-    }
-
-    /* age label */
-    .mmd_bday_cake::after {
-      content: "24";
-      position: absolute;
-      top: -30px;
-      left: 0; right: 0; bottom: 0;
-      margin: 0;
-      font-family: "Impact";
-      font-size: 3em;
-      font-weight: bold;
-      color: #e9f2f9;
-      -webkit-text-stroke: 2px #ff4081;
-      text-shadow: 0 0 10px #ff4081;
-      text-align: center;
-    }
-
-    /* ── CANDLES ── */
-    .candle {
-      position: absolute;
-      top: -30px;
-      width: 5px;
-      height: 18px;
-      background: linear-gradient(180deg, #e0c8f0, #c2c2c2);
-      border-radius: 3px;
-      transform: translateX(-50%);
-      z-index: 2;
-    }
-
-    /* flame */
-    .candle::before {
-      content: "";
-      position: absolute;
-      top: -16px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 11px;
-      height: 17px;
-      background: radial-gradient(ellipse at 50% 70%, #fff5a0, orange 50%, transparent 100%);
-      border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
-      box-shadow:
-        0 0 14px 4px rgba(255,180,0,.7),
-        0 0 30px 6px rgba(255,100,0,.3);
-      animation: flicker .8s infinite ease-in-out alternate;
-      z-index: 3;
-    }
-
-    .candle.out::before { display: none; }
-    .candle.out         { background: #888; }
-    .candle.blowing::before {
-      animation: flickerHard .08s infinite ease-in-out alternate !important;
-    }
-
-    /* ── SMOKE ── */
-    .smoke {
-      position: absolute;
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: rgba(200,200,220,.7);
-      pointer-events: none;
-      animation: smokeRise 2s ease-out forwards;
-    }
-
-    /* ── BALLOONS ── */
-    .balloon-wrap {
-      position: fixed;
-      bottom: -120px;
-      z-index: 10;
-      pointer-events: none;
-      animation: floatUp linear forwards;
-    }
-
-    .balloon {
-      width: 50px;
-      height: 62px;
-      border-radius: 50% 50% 50% 50% / 55% 55% 45% 45%;
-      position: relative;
-      animation: sway 3s ease-in-out infinite alternate;
-    }
-
-    /* balloon string */
-    .balloon::after {
-      content: "";
-      position: absolute;
-      bottom: -18px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 1px;
-      height: 20px;
-      background: rgba(255,255,255,.4);
-    }
-
-    /* ── CONFETTI ── */
-    .confetti-piece {
-      position: fixed;
-      top: -12px;
-      opacity: 0;
-      pointer-events: none;
-      z-index: 100;
-      animation: confettiFall linear forwards;
-    }
-
-    /* ── FIREWORKS CANVAS ── */
-    #fireworks-canvas {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    /* ── LETTER MODAL ── */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(10,0,22,.85);
-      backdrop-filter: blur(8px);
-      z-index: 200;
-      align-items: center;
-      justify-content: center;
-    }
-    .modal-overlay.open { display: flex; }
-
-    .modal-card {
-      background: linear-gradient(160deg, #1e0040, #2a0050);
-      border: 1px solid rgba(255,64,129,.4);
-      border-radius: 20px;
-      max-width: 480px;
-      width: 90%;
-      padding: 2.2em 2.2em 1.8em;
-      position: relative;
-      box-shadow: 0 0 60px rgba(198,120,240,.3);
-      animation: fadeUp .5s ease;
-    }
-
-    .modal-card h3 {
-      font-family: 'Pacifico', cursive;
-      font-size: 1.5em;
-      color: var(--gold);
-      margin: 0 0 .8em;
-      text-align: center;
-      text-shadow: 0 0 12px #ffcc00;
-    }
-
-    .modal-card p {
-      color: #e8d0ff;
-      font-size: 1em;
-      line-height: 1.8;
-      margin: 0 0 .8em;
-    }
-
-    .modal-card .signature {
-      text-align: right;
-      color: var(--pink);
-      font-weight: 700;
-      font-size: 1em;
-      margin-top: 1em;
-    }
-
-    .close-btn {
-      position: absolute;
-      top: 1em;
-      right: 1.2em;
-      background: none;
-      border: none;
-      color: #c0a0e0;
-      font-size: 1.4em;
-      cursor: pointer;
-      line-height: 1;
-    }
-    .close-btn:hover { color: #fff; }
-
-    /* ── ANIMATIONS ── */
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50%       { opacity: .6; }
-    }
-
-    @keyframes flicker {
-      from { transform: scaleX(1)   scaleY(1)   translateX(-50%);              opacity: 1; }
-      to   { transform: scaleX(.85) scaleY(.9)  translateX(-60%);              opacity: .8; }
-    }
-
-    @keyframes flickerHard {
-      from { transform: scaleX(.3)  scaleY(.4)  translateX(-100%) skewX(-25deg); opacity: .4; }
-      to   { transform: scaleX(1.3) scaleY(1.2) translateX(-20%)  skewX(20deg);  opacity: 1; }
-    }
-
-    @keyframes smokeRise {
-      0%   { transform: translateX(-50%) translateY(0)     scale(1); opacity: .8; }
-      100% { transform: translateX(calc(-50% + 12px)) translateY(-50px) scale(5); opacity: 0; }
-    }
-
-    @keyframes floatUp {
-      from { bottom: -120px; opacity: 0; }
-      10%  { opacity: 1; }
-      90%  { opacity: 1; }
-      to   { bottom: 110vh; opacity: 0; }
-    }
-
-    @keyframes sway {
-      from { transform: rotate(-6deg); }
-      to   { transform: rotate(6deg); }
-    }
-
-    @keyframes confettiFall {
-      0%   { transform: translateY(0)     rotate(0deg);   opacity: 1; }
-      100% { transform: translateY(105vh) rotate(720deg); opacity: 0; }
-    }
-
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(40px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Birthday Celebration</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        #countdown { font-size: 2em; }
+    </style>
 </head>
 <body>
-
-  <canvas id="fireworks-canvas"></canvas>
-
-  <h1>🎂 Happy 24th Birthday, Ate Marie! 🎂</h1>
-  <h2>Here's a Cake to Celebrate 🎉</h2>
-
-  <div id="countdown-banner">
-    <p id="bday-msg">🎊 Today is your special day! 🎊</p>
-    <p id="countdown-label">Next birthday in:</p>
-    <div class="units" id="countdown-units">
-      <div class="unit-box">
-        <span id="cd-days">--</span>
-        <span class="unit-label">Days</span>
-      </div>
-      <div class="unit-box">
-        <span id="cd-hours">--</span>
-        <span class="unit-label">Hours</span>
-      </div>
-      <div class="unit-box">
-        <span id="cd-mins">--</span>
-        <span class="unit-label">Mins</span>
-      </div>
-      <div class="unit-box">
-        <span id="cd-secs">--</span>
-        <span class="unit-label">Secs</span>
-      </div>
-    </div>
-  </div>
-
-  <p id="start-prompt">🎵 Click / tap anywhere to start the music!</p>
-
-  <div id="blow-hint">
-    🌬️ Blow into your mic — one candle at a time!
-    <div id="mic-bar-bg"><div id="mic-bar"></div></div>
-  </div>
-
-  <div class="cake-container">
-    <div class="mmd_bday_cake" id="cake"></div>
-  </div>
-
-  <div class="modal-overlay" id="letter-modal">
-    <div class="modal-card">
-      <button class="close-btn"
-        onclick="document.getElementById('letter-modal').classList.remove('open')">✕</button>
-      <h3>💛 Dear Ate Marie,</h3>
-      <p>Happy 24th birthday! 🎂 On this special day, I just want you to know how much you mean to me and everyone around you.</p>
-      <p>Thanks for being genuine to me po,Thanks din po sa advice mo about love po which is that help me a lot when I'm start Falling In love to stranger it is automatically programmed to my mind...☺️ Your Payo(rule) </p>
-      <p>Sometimes I am conscious on what I'm saying if this is good or bad.... I'm too scared and shy na humarap sa inyo..
-lately po kasi
-I'm reading the old kulitan moments (which is I miss the most) and nag overthink po Ako if there's something wrong with it ngayon na Minsan na ki cringe na po me(sorry for the term) sa mga chat ko...
-<br>
-<i>
-#BrainAlgorithmnReset
-</i>
-<br>
-<br>
-Now I am trying to reset my self especially my mind & facing reality...
-#FullStorage!!
-<br>
-Nahihiya na nga Rin po Ako Minsan kaya kapag katabi niyo po Ako Im silence because I'm shy because I'm introvert HAHAHAHA..
-<br>
-don't worry I'm still work in progress pa (sheesh may pa work in progress kineme)
-</p>
-      <p>May this new year of your life bring you all the joy, adventure, and blessings you deserve. You've worked so hard, and great things are waiting for you ahead. Especially your journey on AFP✨ Salute You aways Ate🫡</p>
-      <p>Wishing you a day as wonderful as you are — and many, many more to come. Happy Birthday, Ate! Enjoy Your Day po 💕</p>
-      <div class="signature">— Your Programmer Friends 🎊
-<h2> Josh </h2>
-</div>
-    </div>
-  </div>
-
-<!-- KEEP YOUR ORIGINAL HTML & CSS EXACTLY THE SAME ABOVE -->
-
-<script>
-  // ── CONFIG ─────────────────────────────────────────────
-  const BDAY_YEAR      = 2001;
-  const BDAY_MONTH     = 3;
-  const BDAY_DAY       = 20;
-  const NUM_CANDLES    = 5;
-
-  // 🔥 UPDATED (more sensitive)
-  const BLOW_THRESHOLD = 8;
-  const BLOW_HOLD_MS   = 400;
-
-
-  // ── (KEEP ALL YOUR EXISTING CODE: countdown, cake, music, etc.) ──
-  // ⚠️ DO NOT CHANGE ANYTHING ABOVE MICROPHONE SECTION
-
-
-  // ── MICROPHONE (FIXED + SENSITIVE) ─────────────────────
-  let micStream    = null;
-  let micAnalyser  = null;
-  let micAnimFrame = null;
-  let blowHoldTime = 0;
-  let micReady     = false;
-  let blowingNow   = false;
-
-  async function initMic() {
-    try {
-      micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    } catch (e) {
-      console.log("Mic not allowed");
-      return;
-    }
-
-    const source = audioCtx.createMediaStreamSource(micStream);
-
-    micAnalyser = audioCtx.createAnalyser();
-    micAnalyser.fftSize = 512;
-
-    const dataArray = new Uint8Array(micAnalyser.frequencyBinCount);
-
-    source.connect(micAnalyser);
-    micReady = true;
-
-    function detectBlow() {
-      if (!micReady) return;
-
-      micAnalyser.getByteTimeDomainData(dataArray);
-
-      let sum = 0;
-      for (let i = 0; i < dataArray.length; i++) {
-        let v = (dataArray[i] - 128) / 128;
-        sum += v * v;
-      }
-
-      let volume = Math.sqrt(sum / dataArray.length);
-
-      // 🔥 BOOST sensitivity
-      volume *= 60;
-
-      // 🎚️ update mic bar
-      const percent = Math.min(100, volume * 2);
-      document.getElementById('mic-bar').style.width = percent + '%';
-
-      // 💨 blowing logic
-      if (volume > BLOW_THRESHOLD) {
-        blowHoldTime += 16;
-
-        if (!blowingNow) {
-          blowingNow = true;
-          const candle = getNextLitCandle();
-          if (candle) candle.classList.add('blowing');
+    <h1>Happy Birthday!</h1>
+    <div id="countdown"></div>
+    <canvas id="cakeCanvas" width="300" height="200"></canvas>
+    <audio id="music" src="music.mp3" loop></audio>
+    <script>
+        // Countdown functionality
+        const eventDate = new Date('2026-03-19T17:00:00Z'); // Event date
+        function updateCountdown() {
+            const now = new Date();
+            const timeUntilEvent = eventDate - now;
+            const days = Math.floor(timeUntilEvent / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((timeUntilEvent % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((timeUntilEvent % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((timeUntilEvent % (1000 * 60)) / 1000);
+            document.getElementById('countdown').innerHTML = `Time until event: ${days}d ${hours}h ${minutes}m ${seconds}s`; 
         }
+        setInterval(updateCountdown, 1000);
 
-        if (blowHoldTime > BLOW_HOLD_MS) {
-          blowOutNextCandle();
-          blowHoldTime = 0;
+        // Cake rendering
+        const canvas = document.getElementById('cakeCanvas');
+        const ctx = canvas.getContext('2d');
+        function drawCake() {
+            ctx.fillStyle = 'pink';
+            ctx.fillRect(50, 100, 200, 100); // cake base
+            ctx.fillStyle = 'yellow';
+            ctx.fillRect(50, 70, 200, 30); // frosting
+            ctx.fillStyle = 'brown';
+            for (let i = 0; i < 5; i++) {
+                ctx.fillRect(75 + i * 30, 60, 10, 20); // candles
+            }
         }
+        drawCake();
 
-      } else {
-        blowHoldTime = 0;
+        // Play music
+        document.getElementById('music').play();
 
-        if (blowingNow) {
-          blowingNow = false;
-          const candle = getNextLitCandle();
-          if (candle) candle.classList.remove('blowing');
+        // Fireworks and confetti functionality (simplified)
+        function createFireworks() {
+            alert('Happy Birthday! 🎉'); // Simple fireworks alert
         }
-      }
+        setTimeout(createFireworks, 5000); // Show fireworks 5 seconds after loading
 
-      micAnimFrame = requestAnimationFrame(detectBlow);
-    }
-
-    detectBlow();
-
-    // show UI hint
-    document.getElementById('blow-hint').classList.add('visible');
-  }
-
-  function stopMic() {
-    if (micAnimFrame) cancelAnimationFrame(micAnimFrame);
-    if (micStream) {
-      micStream.getTracks().forEach(track => track.stop());
-    }
-  }
-
-
-  // ── START AUDIO + MIC (FIXED FOR MOBILE) ────────────────
-  document.body.addEventListener('click', async () => {
-    if (!audioCtx) {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-      startMusic();     // your existing music
-      await initMic();  // 🔥 start mic properly
-    }
-  }, { once: true });
-
-</script>
+        function createConfetti() {
+            const confetti = document.createElement('div');
+            confetti.innerHTML = '&#127881;';
+            confetti.style.position = 'absolute';
+            confetti.style.fontSize = '24px';
+            confetti.style.zIndex = 9999;
+            confetti.style.top = Math.random() * window.innerHeight + 'px';
+            confetti.style.left = Math.random() * window.innerWidth + 'px';
+            document.body.appendChild(confetti);
+            setTimeout(() => confetti.remove(), 3000);
+        }
+        setInterval(createConfetti, 300); // Create confetti every 300ms
+    </script>
 </body>
 </html>
