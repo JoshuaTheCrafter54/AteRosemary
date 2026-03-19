@@ -487,422 +487,122 @@ don't worry I'm still work in progress pa (sheesh may pa work in progress kineme
     </div>
   </div>
 
-  <script>
-    // ── CONFIG ─────────────────────────────────────────────
-    const BDAY_YEAR      = 2001;   // Birth year
-    const BDAY_MONTH     = 3;      // March
-    const BDAY_DAY       = 20;
-    const NUM_CANDLES    = 5;
-    const BLOW_THRESHOLD = 16;     // mic volume to count as blowing
-    const BLOW_HOLD_MS   = 550;    // ms of sustained blowing to extinguish one candle
+<!-- KEEP YOUR ORIGINAL HTML & CSS EXACTLY THE SAME ABOVE -->
+
+<script>
+  // ── CONFIG ─────────────────────────────────────────────
+  const BDAY_YEAR      = 2001;
+  const BDAY_MONTH     = 3;
+  const BDAY_DAY       = 20;
+  const NUM_CANDLES    = 5;
+
+  // 🔥 UPDATED (more sensitive)
+  const BLOW_THRESHOLD = 8;
+  const BLOW_HOLD_MS   = 400;
 
 
-    // ── COUNTDOWN ──────────────────────────────────────────
-    function updateCountdown() {
-      const now  = new Date();
-      let   next = new Date(now.getFullYear(), BDAY_MONTH - 1, BDAY_DAY, 0, 0, 0);
+  // ── (KEEP ALL YOUR EXISTING CODE: countdown, cake, music, etc.) ──
+  // ⚠️ DO NOT CHANGE ANYTHING ABOVE MICROPHONE SECTION
 
-      // if today is already past the birthday this year, aim for next year
-      if (now >= next) {
-        next = new Date(now.getFullYear() + 1, BDAY_MONTH - 1, BDAY_DAY, 0, 0, 0);
-      }
 
-      const isToday = now.getMonth() === BDAY_MONTH - 1 && now.getDate() === BDAY_DAY;
-      if (isToday) {
-        document.getElementById('bday-msg').style.display       = 'block';
-        document.getElementById('countdown-label').style.display = 'none';
-        document.getElementById('countdown-units').style.display = 'none';
-        return;
-      }
+  // ── MICROPHONE (FIXED + SENSITIVE) ─────────────────────
+  let micStream    = null;
+  let micAnalyser  = null;
+  let micAnimFrame = null;
+  let blowHoldTime = 0;
+  let micReady     = false;
+  let blowingNow   = false;
 
-      const diff = next - now;
-      document.getElementById('cd-days').textContent  = String(Math.floor(diff / 86400000)).padStart(2, '0');
-      document.getElementById('cd-hours').textContent = String(Math.floor((diff % 86400000) / 3600000)).padStart(2, '0');
-      document.getElementById('cd-mins').textContent  = String(Math.floor((diff % 3600000)  / 60000)).padStart(2, '0');
-      document.getElementById('cd-secs').textContent  = String(Math.floor((diff % 60000)    / 1000)).padStart(2, '0');
+  async function initMic() {
+    try {
+      micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (e) {
+      console.log("Mic not allowed");
+      return;
     }
 
-    updateCountdown();
-    setInterval(updateCountdown, 1000);
+    const source = audioCtx.createMediaStreamSource(micStream);
 
+    micAnalyser = audioCtx.createAnalyser();
+    micAnalyser.fftSize = 512;
 
-    // ── CANDLES ────────────────────────────────────────────
-    const cakeEl    = document.getElementById('cake');
-    const candleEls = [];
-    let   candlesLeft = NUM_CANDLES;
+    const dataArray = new Uint8Array(micAnalyser.frequencyBinCount);
 
-    (function buildCandles() {
-      for (let i = 0; i < NUM_CANDLES; i++) {
-        // spread candles evenly between 15% and 85% of the cake width
-        const pct = NUM_CANDLES === 1 ? 50 : 15 + (70 / (NUM_CANDLES - 1)) * i;
+    source.connect(micAnalyser);
+    micReady = true;
 
-        const candle = document.createElement('span');
-        candle.className       = 'candle';
-        candle.style.left      = pct + '%';
-        candle.dataset.index   = i;
+    function detectBlow() {
+      if (!micReady) return;
 
-        cakeEl.appendChild(candle);
-        candleEls.push(candle);
-      }
-    })();
+      micAnalyser.getByteTimeDomainData(dataArray);
 
-    function getNextLitCandle() {
-      return candleEls.find(c => !c.classList.contains('out'));
-    }
-
-    function blowOutNextCandle() {
-      const candle = getNextLitCandle();
-      if (!candle) return;
-
-      candle.classList.remove('blowing');
-      candle.classList.add('out');
-      candlesLeft--;
-
-      // puff of smoke particles
-      for (let i = 0; i < 5; i++) {
-        setTimeout(() => {
-          const smoke = document.createElement('div');
-          smoke.className  = 'smoke';
-          smoke.style.left = candle.style.left;
-          smoke.style.top  = '-38px';
-          cakeEl.appendChild(smoke);
-          smoke.addEventListener('animationend', () => smoke.remove());
-        }, i * 140);
+      let sum = 0;
+      for (let i = 0; i < dataArray.length; i++) {
+        let v = (dataArray[i] - 128) / 128;
+        sum += v * v;
       }
 
-      // a few fireworks on each blow
-      for (let i = 0; i < 3; i++) setTimeout(launchFirework, i * 150);
+      let volume = Math.sqrt(sum / dataArray.length);
 
-      // all candles out — celebrate!
-      if (candlesLeft === 0) {
-        setTimeout(() => {
-          for (let i = 0; i < 10; i++) setTimeout(launchFirework, i * 180);
-          for (let i = 0; i < 40; i++) setTimeout(spawnConfetti,  i * 30);
-          showToast('🎊 Make a wish, Ate Marie! 🎊');
-          setTimeout(() => document.getElementById('letter-modal').classList.add('open'), 1500);
-          stopMic();
-          document.getElementById('blow-hint').classList.remove('visible');
-        }, 400);
-      }
-    }
+      // 🔥 BOOST sensitivity
+      volume *= 60;
 
+      // 🎚️ update mic bar
+      const percent = Math.min(100, volume * 2);
+      document.getElementById('mic-bar').style.width = percent + '%';
 
-    // ── MUSIC ──────────────────────────────────────────────
-    let audioCtx      = null;
-    let musicPlaying  = false;
-    let scheduledNodes = [];
+      // 💨 blowing logic
+      if (volume > BLOW_THRESHOLD) {
+        blowHoldTime += 16;
 
-    const NOTE_FREQS = {
-      C4: 261.63, D4: 293.66, E4: 329.63, F4: 349.23,
-      G4: 392.00, A4: 440.00, B4: 493.88, C5: 523.25,
-      D5: 587.33, E5: 659.25, F5: 698.46, G5: 783.99,
-    };
-
-    // [note, duration-in-seconds]
-    const HB_MELODY = [
-      ['G4',.35],['G4',.10],['A4',.45],['G4',.45],['C5',.45],['B4',.90],
-      ['G4',.35],['G4',.10],['A4',.45],['G4',.45],['D5',.45],['C5',.90],
-      ['G4',.35],['G4',.10],['G5',.45],['E5',.45],['C5',.35],['B4',.10],['A4',.70],
-      ['F5',.35],['F5',.10],['E5',.45],['C5',.45],['D5',.45],['C5',.90],
-    ];
-
-    function playMelody(ctx, startTime) {
-      let t = startTime;
-      HB_MELODY.forEach(([note, dur]) => {
-        const osc  = ctx.createOscillator();
-        const gain = ctx.createGain();
-
-        osc.type            = 'sine';
-        osc.frequency.value = NOTE_FREQS[note];
-
-        gain.gain.setValueAtTime(0, t);
-        gain.gain.linearRampToValueAtTime(.3, t + .02);
-        gain.gain.linearRampToValueAtTime(0,  t + dur - .02);
-
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(t);
-        osc.stop(t + dur);
-
-        scheduledNodes.push(osc);
-        t += dur + .04;
-      });
-      return t; // returns time when melody ends
-    }
-
-    function startMusic() {
-      if (musicPlaying) return;
-      musicPlaying   = true;
-      scheduledNodes = [];
-
-      function loop(at) {
-        const endTime = playMelody(audioCtx, at);
-        const msUntilLoop = (endTime - audioCtx.currentTime - .2) * 1000;
-        setTimeout(() => {
-          if (musicPlaying) loop(audioCtx.currentTime + .1);
-        }, msUntilLoop);
-      }
-
-      loop(audioCtx.currentTime + .05);
-    }
-
-
-    // ── MICROPHONE ─────────────────────────────────────────
-    let micStream    = null;
-    let micAnalyser  = null;
-    let micAnimFrame = null;
-    let blowHoldTime = 0;
-    let micReady     = false;
-    let blowingNow   = false;
-
-    async function initMic() {
-      try {
-        micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-      } catch (e) {
-        return; // mic not available — silent fail, user can still click
-      }
-
-      const source = audioCtx.createMediaStreamSource(micStream);
-      micAnalyser  = audioCtx.createAnalyser();
-      micAnalyser.fftSize = 256;
-      source.connect(micAnalyser);
-
-      micReady = true;
-      document.getElementById('blow-hint').classList.add('visible');
-
-      const dataArr  = new Uint8Array(micAnalyser.frequencyBinCount);
-      const micBar   = document.getElementById('mic-bar');
-      let   lastTick = performance.now();
-
-      function tick(now) {
-        if (!micReady) return;
-
-        micAnalyser.getByteFrequencyData(dataArr);
-
-        // use only low-frequency bins (bass) for breath detection
-        const vol = dataArr.slice(0, 12).reduce((a, b) => a + b, 0) / 12;
-        micBar.style.width = Math.min(100, (vol / BLOW_THRESHOLD) * 100) + '%';
-
-        const dt  = now - lastTick;
-        lastTick  = now;
-
-        const lit = getNextLitCandle();
-        if (!lit) { micReady = false; return; }
-
-        if (vol > BLOW_THRESHOLD) {
-          lit.classList.add('blowing');
-          blowingNow   = true;
-          blowHoldTime += dt;
-          if (blowHoldTime >= BLOW_HOLD_MS) {
-            blowHoldTime = 0;
-            blowOutNextCandle();
-          }
-        } else {
-          if (blowingNow) lit.classList.remove('blowing');
-          blowingNow   = false;
-          blowHoldTime = Math.max(0, blowHoldTime - dt * .6); // decay when not blowing
+        if (!blowingNow) {
+          blowingNow = true;
+          const candle = getNextLitCandle();
+          if (candle) candle.classList.add('blowing');
         }
 
-        micAnimFrame = requestAnimationFrame(tick);
+        if (blowHoldTime > BLOW_HOLD_MS) {
+          blowOutNextCandle();
+          blowHoldTime = 0;
+        }
+
+      } else {
+        blowHoldTime = 0;
+
+        if (blowingNow) {
+          blowingNow = false;
+          const candle = getNextLitCandle();
+          if (candle) candle.classList.remove('blowing');
+        }
       }
 
-      micAnimFrame = requestAnimationFrame(tick);
+      micAnimFrame = requestAnimationFrame(detectBlow);
     }
 
-    function stopMic() {
-      micReady = false;
-      cancelAnimationFrame(micAnimFrame);
-      if (micStream) micStream.getTracks().forEach(t => t.stop());
+    detectBlow();
+
+    // show UI hint
+    document.getElementById('blow-hint').classList.add('visible');
+  }
+
+  function stopMic() {
+    if (micAnimFrame) cancelAnimationFrame(micAnimFrame);
+    if (micStream) {
+      micStream.getTracks().forEach(track => track.stop());
     }
+  }
 
 
-    // ── FIRST INTERACTION (unlocks audio) ──────────────────
-    let started = false;
-
-    function handleFirst() {
-      if (started) return;
-      started = true;
-
-      ['click', 'keydown', 'touchstart'].forEach(ev =>
-        document.removeEventListener(ev, handleFirst));
-
+  // ── START AUDIO + MIC (FIXED FOR MOBILE) ────────────────
+  document.body.addEventListener('click', async () => {
+    if (!audioCtx) {
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      if (audioCtx.state === 'suspended') audioCtx.resume();
 
-      startMusic();
-      initMic();
-      document.getElementById('start-prompt').style.display = 'none';
+      startMusic();     // your existing music
+      await initMic();  // 🔥 start mic properly
     }
+  }, { once: true });
 
-    ['click', 'keydown', 'touchstart'].forEach(ev =>
-      document.addEventListener(ev, handleFirst));
-
-
-    // ── BALLOONS ───────────────────────────────────────────
-    const BALLOON_COLORS = ['#ff4081','#c678f0','#ffdd44','#33ddff','#44ff99','#ff8800'];
-
-    function spawnBalloon() {
-      const wrap = document.createElement('div');
-      wrap.className = 'balloon-wrap';
-
-      const dur = 5 + Math.random() * 5;
-      wrap.style.cssText = `
-        left: ${Math.random() * 100}vw;
-        animation-duration: ${dur}s;
-        animation-delay: ${Math.random()}s;
-      `;
-
-      const b = document.createElement('div');
-      b.className  = 'balloon';
-      b.style.background = BALLOON_COLORS[Math.floor(Math.random() * BALLOON_COLORS.length)];
-      b.style.boxShadow  = `0 0 14px ${b.style.background}88`;
-
-      wrap.appendChild(b);
-      document.body.appendChild(wrap);
-      wrap.addEventListener('animationend', () => wrap.remove());
-    }
-
-    setInterval(spawnBalloon, 700);
-    for (let i = 0; i < 5; i++) setTimeout(spawnBalloon, i * 300);
-
-
-    // ── CONFETTI ───────────────────────────────────────────
-    const CONFETTI_COLORS  = ['#ffdd44','#ff4081','#c678f0','#33ddff','#44ff99','#ff8800','#fff'];
-    const CONFETTI_SHAPES  = ['circle', 'square', 'triangle'];
-
-    function spawnConfetti() {
-      const el    = document.createElement('div');
-      el.className = 'confetti-piece';
-
-      const color = CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)];
-      const shape = CONFETTI_SHAPES[Math.floor(Math.random() * CONFETTI_SHAPES.length)];
-      const size  = 7 + Math.random() * 8;
-      const dur   = 2.5 + Math.random() * 3;
-
-      el.style.cssText = `
-        left:             ${Math.random() * 100}vw;
-        width:            ${size}px;
-        height:           ${size}px;
-        background:       ${color};
-        border-radius:    ${shape === 'circle' ? '50%' : shape === 'square' ? '2px' : '0'};
-        clip-path:        ${shape === 'triangle' ? 'polygon(50% 0%, 100% 100%, 0% 100%)' : 'none'};
-        animation-duration: ${dur}s;
-        animation-delay:    ${Math.random() * 2}s;
-        transform-origin: center;
-      `;
-
-      document.body.appendChild(el);
-      el.addEventListener('animationend', () => el.remove());
-    }
-
-    setInterval(spawnConfetti, 150);
-    for (let i = 0; i < 20; i++) setTimeout(spawnConfetti, i * 60);
-
-
-    // ── FIREWORKS ──────────────────────────────────────────
-    const fwCanvas  = document.getElementById('fireworks-canvas');
-    const fwCtx     = fwCanvas.getContext('2d');
-    fwCanvas.width  = window.innerWidth;
-    fwCanvas.height = window.innerHeight;
-
-    window.addEventListener('resize', () => {
-      fwCanvas.width  = window.innerWidth;
-      fwCanvas.height = window.innerHeight;
-    });
-
-    class Particle {
-      constructor(x, y, color) {
-        this.x     = x;
-        this.y     = y;
-        this.color = color;
-
-        const angle = Math.random() * Math.PI * 2;
-        const speed = 1 + Math.random() * 4;
-        this.vx     = Math.cos(angle) * speed;
-        this.vy     = Math.sin(angle) * speed;
-
-        this.alpha  = 1;
-        this.decay  = .012 + Math.random() * .015;
-        this.radius = 2   + Math.random() * 2;
-      }
-
-      update() {
-        this.x     += this.vx;
-        this.y     += this.vy;
-        this.vy    += .07;         // gravity
-        this.alpha -= this.decay;
-      }
-
-      draw(ctx) {
-        ctx.save();
-        ctx.globalAlpha = this.alpha;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = this.color;
-        ctx.fill();
-        ctx.restore();
-      }
-    }
-
-    const FIREWORK_COLORS = ['#ffdd44','#ff4081','#c678f0','#33ddff','#fff','#ff8800','#44ff99'];
-    let   particles       = [];
-
-    function launchFirework() {
-      const x     = Math.random() * fwCanvas.width;
-      const y     = Math.random() * fwCanvas.height * .55 + 30;
-      const color = FIREWORK_COLORS[Math.floor(Math.random() * FIREWORK_COLORS.length)];
-      for (let i = 0; i < 80; i++) particles.push(new Particle(x, y, color));
-    }
-
-    function animateFireworks() {
-      fwCtx.clearRect(0, 0, fwCanvas.width, fwCanvas.height);
-      particles = particles.filter(p => p.alpha > 0);
-      particles.forEach(p => { p.update(); p.draw(fwCtx); });
-      requestAnimationFrame(animateFireworks);
-    }
-
-    animateFireworks();
-    setInterval(launchFirework, 1800);
-    setTimeout(launchFirework, 400);
-    setTimeout(launchFirework, 900);
-
-
-    // ── TOAST NOTIFICATION ─────────────────────────────────
-    function showToast(msg) {
-      // inject keyframes once
-      const style = document.createElement('style');
-      style.textContent = `
-        @keyframes toastAnim {
-          0%   { opacity: 0; transform: translateX(-50%) translateY(20px); }
-          15%  { opacity: 1; transform: translateX(-50%) translateY(0); }
-          80%  { opacity: 1; }
-          100% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
-        }
-      `;
-      document.head.appendChild(style);
-
-      const toast = document.createElement('div');
-      toast.textContent = msg;
-      toast.style.cssText = `
-        position:   fixed;
-        bottom:     2em;
-        left:       50%;
-        transform:  translateX(-50%);
-        background: linear-gradient(135deg, #ff4081, #c678f0);
-        color:      #fff;
-        font-family:'Pacifico', cursive;
-        font-size:  1.1em;
-        padding:    .7em 1.8em;
-        border-radius: 50px;
-        box-shadow: 0 4px 30px rgba(255,64,129,.6);
-        z-index:    999;
-        white-space: nowrap;
-        animation:  toastAnim 3.5s ease forwards;
-      `;
-
-      document.body.appendChild(toast);
-      setTimeout(() => toast.remove(), 3600);
-    }
-  </script>
+</script>
 </body>
 </html>
