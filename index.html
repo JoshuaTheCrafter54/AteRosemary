@@ -328,11 +328,23 @@
       border-radius: 20px;
       max-width: 480px;
       width: 90%;
+      /* ── SCROLLABLE FIX ── */
+      max-height: 80vh;
+      overflow-y: auto;
+      overflow-x: hidden;
+      /* ── end fix ── */
       padding: 2.2em 2.2em 1.8em;
       position: relative;
       box-shadow: 0 0 60px rgba(198,120,240,.3);
       animation: fadeUp .5s ease;
-      overflow-x: scroll;
+    }
+
+    /* custom scrollbar inside the modal */
+    .modal-card::-webkit-scrollbar { width: 6px; }
+    .modal-card::-webkit-scrollbar-track { background: transparent; }
+    .modal-card::-webkit-scrollbar-thumb {
+      background: rgba(198,120,240,.5);
+      border-radius: 10px;
     }
 
     .modal-card h3 {
@@ -360,15 +372,16 @@
     }
 
     .close-btn {
-      position: absolute;
-      top: 1em;
-      right: 1.2em;
+      position: sticky;
+      top: 0;
+      float: right;
       background: none;
       border: none;
       color: #c0a0e0;
       font-size: 1.4em;
       cursor: pointer;
       line-height: 1;
+      z-index: 10;
     }
     .close-btn:hover { color: #fff; }
 
@@ -476,12 +489,12 @@
 
   <script>
     // ── CONFIG ─────────────────────────────────────────────
-    const BDAY_YEAR      = 2001;   // Birth year
-    const BDAY_MONTH     = 3;      // March
+    const BDAY_YEAR      = 2001;
+    const BDAY_MONTH     = 3;
     const BDAY_DAY       = 20;
     const NUM_CANDLES    = 5;
-    const BLOW_THRESHOLD = 6;      // ← lowered from 16 → more sensitive
-    const BLOW_HOLD_MS   = 550;    // ms of sustained blowing to extinguish one candle
+    const BLOW_THRESHOLD = 6;
+    const BLOW_HOLD_MS   = 550;
 
 
     // ── COUNTDOWN ──────────────────────────────────────────
@@ -660,7 +673,6 @@
 
         micAnalyser.getByteFrequencyData(dataArr);
 
-        // ── wider bin range (0–30) catches breath noise better than bass-only ──
         const slice = dataArr.slice(0, 30);
         const vol   = slice.reduce((a, b) => a + b, 0) / slice.length;
 
