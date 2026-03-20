@@ -460,7 +460,7 @@
     <div class="modal-card">
       <button class="close-btn"
         onclick="document.getElementById('letter-modal').classList.remove('open')">✕</button>
- <h3>💛 Dear Ate Marie,</h3>
+      <h3>💛 Dear Ate Marie,</h3>
       <p>Happy 24th birthday! 🎂 On this special day, I just want you to know how much you mean to me and everyone around you.</p>
       <p>I want to thank you about po sa mga Payo. Especially po pagdating sa love.. which is automatic na po nakaprogram sa utak ko.</p>
       <p>I want to take this opportunity po to say sorry if I said something wrong... conscious po Kasi ako Minsan if may nasabi po Akong di maganda..</p>
@@ -479,7 +479,7 @@
     const BDAY_MONTH     = 3;      // March
     const BDAY_DAY       = 20;
     const NUM_CANDLES    = 5;
-    const BLOW_THRESHOLD = 16;     // mic volume to count as blowing
+    const BLOW_THRESHOLD = 6;      // ← lowered from 16 → more sensitive
     const BLOW_HOLD_MS   = 550;    // ms of sustained blowing to extinguish one candle
 
 
@@ -488,7 +488,6 @@
       const now  = new Date();
       let   next = new Date(now.getFullYear(), BDAY_MONTH - 1, BDAY_DAY, 0, 0, 0);
 
-      // if today is already past the birthday this year, aim for next year
       if (now >= next) {
         next = new Date(now.getFullYear() + 1, BDAY_MONTH - 1, BDAY_DAY, 0, 0, 0);
       }
@@ -519,7 +518,6 @@
 
     (function buildCandles() {
       for (let i = 0; i < NUM_CANDLES; i++) {
-        // spread candles evenly between 15% and 85% of the cake width
         const pct = NUM_CANDLES === 1 ? 50 : 15 + (70 / (NUM_CANDLES - 1)) * i;
 
         const candle = document.createElement('span');
@@ -544,7 +542,6 @@
       candle.classList.add('out');
       candlesLeft--;
 
-      // puff of smoke particles
       for (let i = 0; i < 5; i++) {
         setTimeout(() => {
           const smoke = document.createElement('div');
@@ -556,10 +553,8 @@
         }, i * 140);
       }
 
-      // a few fireworks on each blow
       for (let i = 0; i < 3; i++) setTimeout(launchFirework, i * 150);
 
-      // all candles out — celebrate!
       if (candlesLeft === 0) {
         setTimeout(() => {
           for (let i = 0; i < 10; i++) setTimeout(launchFirework, i * 180);
@@ -584,7 +579,6 @@
       D5: 587.33, E5: 659.25, F5: 698.46, G5: 783.99,
     };
 
-    // [note, duration-in-seconds]
     const HB_MELODY = [
       ['G4',.35],['G4',.10],['A4',.45],['G4',.45],['C5',.45],['B4',.90],
       ['G4',.35],['G4',.10],['A4',.45],['G4',.45],['D5',.45],['C5',.90],
@@ -613,7 +607,7 @@
         scheduledNodes.push(osc);
         t += dur + .04;
       });
-      return t; // returns time when melody ends
+      return t;
     }
 
     function startMusic() {
@@ -645,7 +639,7 @@
       try {
         micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
       } catch (e) {
-        return; // mic not available — silent fail, user can still click
+        return;
       }
 
       const source = audioCtx.createMediaStreamSource(micStream);
@@ -665,8 +659,10 @@
 
         micAnalyser.getByteFrequencyData(dataArr);
 
-        // use only low-frequency bins (bass) for breath detection
-        const vol = dataArr.slice(0, 12).reduce((a, b) => a + b, 0) / 12;
+        // ── wider bin range (0–30) catches breath noise better than bass-only ──
+        const slice = dataArr.slice(0, 30);
+        const vol   = slice.reduce((a, b) => a + b, 0) / slice.length;
+
         micBar.style.width = Math.min(100, (vol / BLOW_THRESHOLD) * 100) + '%';
 
         const dt  = now - lastTick;
@@ -686,7 +682,7 @@
         } else {
           if (blowingNow) lit.classList.remove('blowing');
           blowingNow   = false;
-          blowHoldTime = Math.max(0, blowHoldTime - dt * .6); // decay when not blowing
+          blowHoldTime = Math.max(0, blowHoldTime - dt * .6);
         }
 
         micAnimFrame = requestAnimationFrame(tick);
@@ -815,7 +811,7 @@
       update() {
         this.x     += this.vx;
         this.y     += this.vy;
-        this.vy    += .07;         // gravity
+        this.vy    += .07;
         this.alpha -= this.decay;
       }
 
@@ -855,7 +851,6 @@
 
     // ── TOAST NOTIFICATION ─────────────────────────────────
     function showToast(msg) {
-      // inject keyframes once
       const style = document.createElement('style');
       style.textContent = `
         @keyframes toastAnim {
